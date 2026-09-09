@@ -306,6 +306,10 @@ function stateDescription() {
     <footer>
       <span>计算规则：帮手每次工作1小时，所有帮手共用23小时工作日。</span>
       <span>时间结果以当前设备时区为准</span>
+      <span>
+        本工具为非官方玩家内容，未经 Supercell 认可。详见
+        <a href="https://supercell.com/en/fan-content-policy/" target="_blank" rel="noreferrer">粉丝内容政策</a>。
+      </span>
     </footer>
   </div>
 </template>
