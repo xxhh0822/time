@@ -306,7 +306,7 @@ function stateDescription() {
         </div>
 
         <div v-if="result" class="result-content">
-          <div class="finish-card">
+          <div class="finish-card" :class="helperType">
             <div class="result-character" :class="helperType">
               <img :src="helperType === 'lab' ? labAssistantImage : builderApprenticeImage" :alt="helper.name" />
             </div>

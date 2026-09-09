@@ -39,12 +39,24 @@ describe('App', () => {
     await days.setValue('1')
     await wrapper.find('.calculate-button').trigger('click')
     expect(wrapper.find('.result-content').exists()).toBe(true)
+    expect(wrapper.find('.finish-card').classes()).toContain('lab')
     expect(wrapper.find('.boost-list').exists()).toBe(true)
     expect(wrapper.find('.no-boost').exists()).toBe(false)
 
     await days.setValue('2')
     expect(wrapper.find('.result-content').exists()).toBe(false)
     expect(wrapper.find('.empty-result').exists()).toBe(true)
+  })
+
+  it('applies the builder result layout when the builder apprentice is selected', async () => {
+    const wrapper = mount(App)
+
+    await wrapper.findAll('.helper-option')[1].trigger('click')
+    await wrapper.find('input[type="number"]').setValue('1')
+    await wrapper.find('.calculate-button').trigger('click')
+
+    expect(wrapper.find('.finish-card').classes()).toContain('builder')
+    expect(wrapper.find('.result-character').classes()).toContain('builder')
   })
 
   it('rejects fractional values and durations over 365 days', async () => {

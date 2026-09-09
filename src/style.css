@@ -408,15 +408,21 @@ h1 {
     radial-gradient(circle at 95% 10%, rgba(235, 198, 108, 0.35), transparent 26%),
     linear-gradient(135deg, #173f34, #0f3029);
   color: #fff;
-  padding: 26px 20px 26px 42%;
+  padding: 26px 20px;
+}
+
+.finish-card.builder {
+  padding-left: 46%;
+}
+
+.finish-card.lab {
+  padding-right: 43%;
 }
 
 .result-character {
   position: absolute;
-  left: -10px;
-  bottom: -24px;
-  width: 44%;
-  height: 190px;
+  bottom: 8px;
+  height: calc(100% - 16px);
 }
 
 .result-character img {
@@ -427,9 +433,13 @@ h1 {
 }
 
 .result-character.builder {
-  bottom: -8px;
-  width: 48%;
-  height: 165px;
+  left: 8px;
+  width: 44%;
+}
+
+.result-character.lab {
+  right: 12px;
+  width: 38%;
 }
 
 .finish-main span,
@@ -759,7 +769,22 @@ footer a {
 
   .finish-card {
     min-height: 170px;
-    padding-left: 40%;
+  }
+
+  .finish-card.builder {
+    padding: 22px 16px 22px 45%;
+  }
+
+  .finish-card.lab {
+    padding: 22px 43% 22px 18px;
+  }
+
+  .result-character.builder {
+    left: 6px;
+  }
+
+  .result-character.lab {
+    right: 6px;
   }
 
   .comparison-grid {
