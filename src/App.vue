@@ -180,9 +180,9 @@ function stateDescription() {
             <span>按游戏界面填写</span>
           </div>
           <div class="duration-fields">
-            <label><input v-model.number="days" type="number" min="0" /><span>天</span></label>
-            <label><input v-model.number="hours" type="number" min="0" max="23" /><span>时</span></label>
-            <label><input v-model.number="minutes" type="number" min="0" max="59" /><span>分</span></label>
+            <label><input v-model.number="days" type="number" inputmode="numeric" min="0" step="1" /><span>天</span></label>
+            <label><input v-model.number="hours" type="number" inputmode="numeric" min="0" max="23" step="1" /><span>时</span></label>
+            <label><input v-model.number="minutes" type="number" inputmode="numeric" min="0" max="59" step="1" /><span>分</span></label>
           </div>
         </div>
 
@@ -219,8 +219,8 @@ function stateDescription() {
             <span>最长23小时</span>
           </div>
           <div class="duration-fields two-time-fields">
-            <label><input v-model.number="cooldownHours" type="number" min="0" max="23" /><span>小时</span></label>
-            <label><input v-model.number="cooldownMinutes" type="number" min="0" max="59" /><span>分钟</span></label>
+            <label><input v-model.number="cooldownHours" type="number" inputmode="numeric" min="0" max="23" step="1" /><span>小时</span></label>
+            <label><input v-model.number="cooldownMinutes" type="number" inputmode="numeric" min="0" max="59" step="1" /><span>分钟</span></label>
           </div>
         </div>
 
