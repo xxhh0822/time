@@ -11,13 +11,13 @@ import {
 } from './calculator'
 
 const helperType = ref<HelperType>('lab')
-const days = ref(6)
-const hours = ref(8)
-const minutes = ref(30)
+const days = ref(0)
+const hours = ref(0)
+const minutes = ref(0)
 const helperLevel = ref(8)
 const workdayState = ref<WorkdayState>('used')
-const cooldownHours = ref(17)
-const cooldownMinutes = ref(25)
+const cooldownHours = ref(0)
+const cooldownMinutes = ref(0)
 const result = ref<CalculationResult | null>(null)
 const calculatedAt = ref<Date | null>(null)
 const error = ref('')
@@ -53,7 +53,17 @@ function chooseHelper(type: HelperType) {
   error.value = ''
 }
 
+type TimeField = 'days' | 'hours' | 'minutes' | 'cooldownHours' | 'cooldownMinutes'
+
+function defaultEmptyToZero(field: TimeField) {
+  const fields = { days, hours, minutes, cooldownHours, cooldownMinutes }
+  const value = Number(fields[field].value)
+  fields[field].value = Number.isFinite(value) ? value : 0
+}
+
 function runCalculation() {
+  const timeFields: TimeField[] = ['days', 'hours', 'minutes', 'cooldownHours', 'cooldownMinutes']
+  timeFields.forEach(defaultEmptyToZero)
   error.value = ''
   const values = [days.value, hours.value, minutes.value, cooldownHours.value, cooldownMinutes.value]
 
@@ -180,9 +190,9 @@ function stateDescription() {
             <span>按游戏界面填写</span>
           </div>
           <div class="duration-fields">
-            <label><input v-model.number="days" type="number" inputmode="numeric" min="0" step="1" /><span>天</span></label>
-            <label><input v-model.number="hours" type="number" inputmode="numeric" min="0" max="23" step="1" /><span>时</span></label>
-            <label><input v-model.number="minutes" type="number" inputmode="numeric" min="0" max="59" step="1" /><span>分</span></label>
+            <label><input v-model.number="days" type="number" inputmode="numeric" min="0" step="1" @blur="defaultEmptyToZero('days')" /><span>天</span></label>
+            <label><input v-model.number="hours" type="number" inputmode="numeric" min="0" max="23" step="1" @blur="defaultEmptyToZero('hours')" /><span>时</span></label>
+            <label><input v-model.number="minutes" type="number" inputmode="numeric" min="0" max="59" step="1" @blur="defaultEmptyToZero('minutes')" /><span>分</span></label>
           </div>
         </div>
 
@@ -219,8 +229,8 @@ function stateDescription() {
             <span>最长23小时</span>
           </div>
           <div class="duration-fields two-time-fields">
-            <label><input v-model.number="cooldownHours" type="number" inputmode="numeric" min="0" max="23" step="1" /><span>小时</span></label>
-            <label><input v-model.number="cooldownMinutes" type="number" inputmode="numeric" min="0" max="59" step="1" /><span>分钟</span></label>
+            <label><input v-model.number="cooldownHours" type="number" inputmode="numeric" min="0" max="23" step="1" @blur="defaultEmptyToZero('cooldownHours')" /><span>小时</span></label>
+            <label><input v-model.number="cooldownMinutes" type="number" inputmode="numeric" min="0" max="59" step="1" @blur="defaultEmptyToZero('cooldownMinutes')" /><span>分钟</span></label>
           </div>
         </div>
 
