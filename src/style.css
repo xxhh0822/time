@@ -528,6 +528,31 @@ h1 {
   gap: 8px;
 }
 
+.boost-list .boost-omitted {
+  display: block;
+  min-height: 0;
+  margin: 2px 0 14px 37px;
+  border: 1px dashed #d4d9ce;
+  border-radius: 9px;
+  color: #87958f;
+  padding: 7px 10px;
+  text-align: center;
+  font-size: 10px;
+}
+
+.schedule-toggle {
+  display: block;
+  margin: 10px auto 0;
+  border: 0;
+  background: transparent;
+  color: #327156;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .boost-index {
   color: #9b7b3a;
   font-size: 10px;

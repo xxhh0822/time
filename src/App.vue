@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import builderApprenticeImage from './assets/builder-apprentice.png'
 import labAssistantImage from './assets/lab-assistant.png'
 import {
   calculateFinish,
   maxLevelFor,
+  type BoostRecord,
   type CalculationResult,
   type HelperType,
   type WorkdayState,
@@ -15,19 +16,23 @@ const days = ref(0)
 const hours = ref(0)
 const minutes = ref(0)
 const helperLevel = ref(8)
-const workdayState = ref<WorkdayState>('used')
+const workdayState = ref<WorkdayState>('idle')
 const cooldownHours = ref(0)
 const cooldownMinutes = ref(0)
 const result = ref<CalculationResult | null>(null)
 const calculatedAt = ref<Date | null>(null)
 const error = ref('')
+const scheduleExpanded = ref(false)
+
+const MAX_REMAINING_DAYS = 365
+const MAX_REMAINING_MINUTES = MAX_REMAINING_DAYS * 24 * 60
 
 const helper = computed(() => {
   if (helperType.value === 'lab') {
     return {
       name: '实验助手',
       project: '实验室研究',
-      maxLevel: 12,
+      maxLevel: maxLevelFor('lab'),
       description: '为兵种、法术和攻城机器研究加速',
     }
   }
@@ -35,7 +40,7 @@ const helper = computed(() => {
   return {
     name: '建筑工人学徒',
     project: '建筑工人项目',
-    maxLevel: 8,
+    maxLevel: maxLevelFor('builder'),
     description: '为建筑、陷阱和英雄等施工项目加速',
   }
 })
@@ -46,29 +51,72 @@ const levelOptions = computed(() =>
 
 const showCooldown = computed(() => workdayState.value !== 'idle')
 
+type VisibleBoost =
+  | { kind: 'boost'; key: string; boost: BoostRecord; index: number }
+  | { kind: 'omitted'; key: string; count: number }
+
+const hasCollapsibleBoosts = computed(() => (result.value?.boosts.length ?? 0) > 11)
+
+const visibleBoosts = computed<VisibleBoost[]>(() => {
+  const boosts = result.value?.boosts ?? []
+  const records = boosts.map((boost, index) => ({
+    kind: 'boost' as const,
+    key: `boost-${index}`,
+    boost,
+    index,
+  }))
+
+  if (scheduleExpanded.value || boosts.length <= 11) return records
+
+  return [
+    ...records.slice(0, 10),
+    { kind: 'omitted', key: 'omitted', count: boosts.length - 11 },
+    records[records.length - 1],
+  ]
+})
+
+watch(
+  [helperType, days, hours, minutes, helperLevel, workdayState, cooldownHours, cooldownMinutes],
+  () => {
+    result.value = null
+    calculatedAt.value = null
+    error.value = ''
+    scheduleExpanded.value = false
+  },
+  { flush: 'sync' },
+)
+
 function chooseHelper(type: HelperType) {
   helperType.value = type
   helperLevel.value = Math.min(helperLevel.value, maxLevelFor(type))
-  result.value = null
-  error.value = ''
 }
 
 type TimeField = 'days' | 'hours' | 'minutes' | 'cooldownHours' | 'cooldownMinutes'
 
 function defaultEmptyToZero(field: TimeField) {
   const fields = { days, hours, minutes, cooldownHours, cooldownMinutes }
-  const value = Number(fields[field].value)
-  fields[field].value = Number.isFinite(value) ? value : 0
+  const value = fields[field].value as number | string | null
+  if (value === '' || value === null) fields[field].value = 0
 }
 
 function runCalculation() {
   const timeFields: TimeField[] = ['days', 'hours', 'minutes', 'cooldownHours', 'cooldownMinutes']
   timeFields.forEach(defaultEmptyToZero)
   error.value = ''
-  const values = [days.value, hours.value, minutes.value, cooldownHours.value, cooldownMinutes.value]
+  const values = [
+    days.value,
+    hours.value,
+    minutes.value,
+    ...(showCooldown.value ? [cooldownHours.value, cooldownMinutes.value] : []),
+  ]
 
   if (values.some((value) => !Number.isFinite(value) || value < 0)) {
     error.value = '请输入有效的非负时间。'
+    return
+  }
+
+  if (values.some((value) => !Number.isInteger(value))) {
+    error.value = '时间只能填写整数。'
     return
   }
 
@@ -83,6 +131,11 @@ function runCalculation() {
     return
   }
 
+  if (remaining > MAX_REMAINING_MINUTES) {
+    error.value = `项目剩余时间不能超过${MAX_REMAINING_DAYS}天。`
+    return
+  }
+
   const cooldown = cooldownHours.value * 60 + cooldownMinutes.value
   if (showCooldown.value && (cooldown <= 0 || cooldown > 23 * 60)) {
     error.value = '共享倒计时应大于0且不超过23小时。'
@@ -91,6 +144,7 @@ function runCalculation() {
 
   const now = new Date()
   calculatedAt.value = now
+  scheduleExpanded.value = false
   result.value = calculateFinish({
     startAt: now,
     remainingMinutes: remaining,
@@ -190,7 +244,7 @@ function stateDescription() {
             <span>按游戏界面填写</span>
           </div>
           <div class="duration-fields">
-            <label><input v-model.number="days" type="number" inputmode="numeric" min="0" step="1" @blur="defaultEmptyToZero('days')" /><span>天</span></label>
+            <label><input v-model.number="days" type="number" inputmode="numeric" min="0" :max="MAX_REMAINING_DAYS" step="1" @blur="defaultEmptyToZero('days')" /><span>天</span></label>
             <label><input v-model.number="hours" type="number" inputmode="numeric" min="0" max="23" step="1" @blur="defaultEmptyToZero('hours')" /><span>时</span></label>
             <label><input v-model.number="minutes" type="number" inputmode="numeric" min="0" max="59" step="1" @blur="defaultEmptyToZero('minutes')" /><span>分</span></label>
           </div>
@@ -283,19 +337,33 @@ function stateDescription() {
               <h3>预计加速记录</h3>
               <span v-if="calculatedAt">基于 {{ formatDateTime(calculatedAt) }}</span>
             </div>
-            <ol v-if="result.boosts.length" class="boost-list">
-              <li v-for="(boost, index) in result.boosts" :key="boost.startsAt.getTime()">
-                <span class="boost-index">{{ String(index + 1).padStart(2, '0') }}</span>
-                <span class="boost-line" aria-hidden="true"></span>
-                <div>
-                  <strong>{{ formatDateTime(boost.startsAt) }}</strong>
-                  <span>
-                    {{ boost.partial ? '部分加速' : '完整加速' }} ·
-                    贡献{{ formatDuration(boost.helperProgressMinutes) }}
-                  </span>
-                </div>
-              </li>
-            </ol>
+            <template v-if="result.boosts.length">
+              <ol class="boost-list">
+                <template v-for="item in visibleBoosts" :key="item.key">
+                  <li v-if="item.kind === 'boost'">
+                    <span class="boost-index">{{ String(item.index + 1).padStart(2, '0') }}</span>
+                    <span class="boost-line" aria-hidden="true"></span>
+                    <div>
+                      <strong>{{ formatDateTime(item.boost.startsAt) }}</strong>
+                      <span>
+                        {{ item.boost.partial ? '部分加速' : '完整加速' }} ·
+                        贡献{{ formatDuration(item.boost.helperProgressMinutes) }}
+                      </span>
+                    </div>
+                  </li>
+                  <li v-else class="boost-omitted">中间 {{ item.count }} 次记录已折叠</li>
+                </template>
+              </ol>
+              <button
+                v-if="hasCollapsibleBoosts"
+                type="button"
+                class="schedule-toggle"
+                :aria-expanded="scheduleExpanded"
+                @click="scheduleExpanded = !scheduleExpanded"
+              >
+                {{ scheduleExpanded ? '收起记录' : `展开全部 ${result.boosts.length} 次` }}
+              </button>
+            </template>
             <div v-else class="no-boost">
               项目会在帮手恢复前完成，本次不会触发加速。
             </div>
