@@ -255,7 +255,7 @@ function stateDescription() {
             <span>帮手等级</span>
             <select v-model.number="helperLevel">
               <option v-for="level in levelOptions" :key="level" :value="level">
-                {{ level }}级 · 贡献{{ level }}小时
+                {{ level }}级 · 加速{{ level }}小时
               </option>
             </select>
           </label>
@@ -347,7 +347,7 @@ function stateDescription() {
                       <strong>{{ formatDateTime(item.boost.startsAt) }}</strong>
                       <span>
                         {{ item.boost.partial ? '部分加速' : '完整加速' }} ·
-                        贡献{{ formatDuration(item.boost.helperProgressMinutes) }}
+                        加速{{ formatDuration(item.boost.helperProgressMinutes) }}
                       </span>
                     </div>
                   </li>
