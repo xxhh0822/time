@@ -326,21 +326,28 @@ h1 {
 
 .select-field select {
   width: 100%;
+  appearance: none;
   border: 1px solid #d9e0d9;
   border-radius: 12px;
   outline: 0;
-  background: #fff;
-  padding: 12px 35px 12px 13px;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m2 2 4 4 4-4' fill='none' stroke='%2317362f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 12px 8px;
+  padding: 12px 40px 12px 13px;
   color: #17362f;
 }
 
 .level-note {
   display: flex;
+  min-height: 44px;
+  align-self: end;
   flex-direction: column;
   justify-content: center;
   border-radius: 12px;
   background: #eee9d7;
-  padding: 10px 13px;
+  padding: 7px 13px;
 }
 
 .level-note strong {
