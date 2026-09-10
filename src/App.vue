@@ -2,7 +2,6 @@
 import { computed, ref, watch } from 'vue'
 import builderApprenticeImage from './assets/builder-apprentice.png'
 import labAssistantImage from './assets/lab-assistant.png'
-import ScreenshotRecognizer, { type AppliedRecognition } from './ScreenshotRecognizer.vue'
 import {
   calculateFinish,
   maxLevelFor,
@@ -20,8 +19,6 @@ const helperLevel = ref(8)
 const workdayState = ref<WorkdayState>('idle')
 const cooldownHours = ref(0)
 const cooldownMinutes = ref(0)
-const activeRemainingMinutes = ref(0)
-const recognizedProjectName = ref('')
 const result = ref<CalculationResult | null>(null)
 const calculatedAt = ref<Date | null>(null)
 const error = ref('')
@@ -52,8 +49,7 @@ const levelOptions = computed(() =>
   Array.from({ length: helper.value.maxLevel }, (_, index) => index + 1),
 )
 
-const showCooldown = computed(() => workdayState.value === 'available' || workdayState.value === 'used')
-const showActiveRemaining = computed(() => workdayState.value === 'working')
+const showCooldown = computed(() => workdayState.value !== 'idle')
 
 type VisibleBoost =
   | { kind: 'boost'; key: string; boost: BoostRecord; index: number }
@@ -80,7 +76,7 @@ const visibleBoosts = computed<VisibleBoost[]>(() => {
 })
 
 watch(
-  [helperType, days, hours, minutes, helperLevel, workdayState, cooldownHours, cooldownMinutes, activeRemainingMinutes],
+  [helperType, days, hours, minutes, helperLevel, workdayState, cooldownHours, cooldownMinutes],
   () => {
     result.value = null
     calculatedAt.value = null
@@ -95,16 +91,16 @@ function chooseHelper(type: HelperType) {
   helperLevel.value = Math.min(helperLevel.value, maxLevelFor(type))
 }
 
-type TimeField = 'days' | 'hours' | 'minutes' | 'cooldownHours' | 'cooldownMinutes' | 'activeRemainingMinutes'
+type TimeField = 'days' | 'hours' | 'minutes' | 'cooldownHours' | 'cooldownMinutes'
 
 function defaultEmptyToZero(field: TimeField) {
-  const fields = { days, hours, minutes, cooldownHours, cooldownMinutes, activeRemainingMinutes }
+  const fields = { days, hours, minutes, cooldownHours, cooldownMinutes }
   const value = fields[field].value as number | string | null
   if (value === '' || value === null) fields[field].value = 0
 }
 
 function runCalculation() {
-  const timeFields: TimeField[] = ['days', 'hours', 'minutes', 'cooldownHours', 'cooldownMinutes', 'activeRemainingMinutes']
+  const timeFields: TimeField[] = ['days', 'hours', 'minutes', 'cooldownHours', 'cooldownMinutes']
   timeFields.forEach(defaultEmptyToZero)
   error.value = ''
   const values = [
@@ -112,7 +108,6 @@ function runCalculation() {
     hours.value,
     minutes.value,
     ...(showCooldown.value ? [cooldownHours.value, cooldownMinutes.value] : []),
-    ...(showActiveRemaining.value ? [activeRemainingMinutes.value] : []),
   ]
 
   if (values.some((value) => !Number.isFinite(value) || value < 0)) {
@@ -147,11 +142,6 @@ function runCalculation() {
     return
   }
 
-  if (showActiveRemaining.value && (activeRemainingMinutes.value <= 0 || activeRemainingMinutes.value > 60)) {
-    error.value = '本轮剩余工作时间应大于0且不超过60分钟。'
-    return
-  }
-
   const now = new Date()
   calculatedAt.value = now
   scheduleExpanded.value = false
@@ -161,21 +151,7 @@ function runCalculation() {
     helperLevel: helperLevel.value,
     workdayState: workdayState.value,
     cooldownMinutes: showCooldown.value ? cooldown : 0,
-    activeRemainingMinutes: showActiveRemaining.value ? activeRemainingMinutes.value : 0,
   })
-}
-
-function applyRecognition(value: AppliedRecognition) {
-  helperType.value = value.helperType
-  helperLevel.value = value.helperLevel
-  workdayState.value = value.workdayState
-  days.value = Math.floor(value.remainingMinutes / 1440)
-  hours.value = Math.floor((value.remainingMinutes % 1440) / 60)
-  minutes.value = value.remainingMinutes % 60
-  cooldownHours.value = Math.floor(value.cooldownMinutes / 60)
-  cooldownMinutes.value = value.cooldownMinutes % 60
-  activeRemainingMinutes.value = value.activeRemainingMinutes
-  recognizedProjectName.value = value.projectName
 }
 
 function formatDateTime(date: Date) {
@@ -202,7 +178,6 @@ function formatDuration(value: number) {
 function stateDescription() {
   if (workdayState.value === 'idle') return '立即工作，随后开启23小时共享工作日'
   if (workdayState.value === 'available') return '本轮立即工作，下次按共享倒计时刷新'
-  if (workdayState.value === 'working') return '先完成当前工作时段，再按共享工作日持续指派'
   return '本轮已使用，等待共享倒计时结束后工作'
 }
 </script>
@@ -227,8 +202,6 @@ function stateDescription() {
           </div>
           <span class="auto-tag">持续指派</span>
         </div>
-
-        <ScreenshotRecognizer @apply="applyRecognition" />
 
         <div class="helper-picker" role="radiogroup" aria-label="选择帮手类型">
           <button
@@ -268,7 +241,7 @@ function stateDescription() {
         <div class="field-group">
           <div class="field-title">
             <label>当前剩余时间</label>
-            <span>{{ recognizedProjectName || '按游戏界面填写' }}</span>
+            <span>按游戏界面填写</span>
           </div>
           <div class="duration-fields">
             <label><input v-model.number="days" type="number" inputmode="numeric" min="0" :max="MAX_REMAINING_DAYS" step="1" @blur="defaultEmptyToZero('days')" /><span>天</span></label>
@@ -298,22 +271,10 @@ function stateDescription() {
             <select v-model="workdayState">
               <option value="idle">全部已刷新，现在可用</option>
               <option value="available">共享倒计时中，本轮尚未使用</option>
-              <option value="working">正在工作</option>
               <option value="used">本轮已经使用</option>
             </select>
           </label>
           <p class="field-hint">{{ stateDescription() }}</p>
-        </div>
-
-        <div v-if="showActiveRemaining" class="field-group cooldown-group active-work-group">
-          <div class="field-title">
-            <label>本轮剩余工作时间</label>
-            <span>最长60分钟</span>
-          </div>
-          <div class="duration-fields one-time-field">
-            <label><input v-model.number="activeRemainingMinutes" type="number" inputmode="numeric" min="1" max="60" step="1" @blur="defaultEmptyToZero('activeRemainingMinutes')" /><span>分钟</span></label>
-          </div>
-          <p class="field-hint">截图包含秒数时按分钟向上取整</p>
         </div>
 
         <div v-if="showCooldown" class="field-group cooldown-group">

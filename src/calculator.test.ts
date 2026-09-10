@@ -70,35 +70,6 @@ describe('calculateFinish', () => {
     expect(result.savedMinutes).toBe(20)
   })
 
-  it('finishes during an already active helper session', () => {
-    const result = calculateFinish({
-      startAt,
-      remainingMinutes: 90,
-      helperLevel: 8,
-      workdayState: 'working',
-      cooldownMinutes: 0,
-      activeRemainingMinutes: 60,
-    })
-
-    expect(result.boosts).toHaveLength(1)
-    expect(result.boosts[0].partial).toBe(true)
-    expect(result.boostedFinishAt.toISOString()).toBe(new Date('2026-09-09T10:10:00+08:00').toISOString())
-  })
-
-  it('waits for the derived workday boundary after an active session', () => {
-    const result = calculateFinish({
-      startAt,
-      remainingMinutes: 30 * 60,
-      helperLevel: 2,
-      workdayState: 'working',
-      cooldownMinutes: 0,
-      activeRemainingMinutes: 30,
-    })
-
-    expect(result.boosts[0].endsAt.toISOString()).toBe(new Date('2026-09-09T10:30:00+08:00').toISOString())
-    expect(result.boosts[1].startsAt.toISOString()).toBe(new Date('2026-09-10T08:30:00+08:00').toISOString())
-  })
-
   it('repeats boosts every 23 hours', () => {
     const result = calculateFinish({
       startAt,

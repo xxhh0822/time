@@ -7,18 +7,12 @@
     "node": ">=24.15 <25"
   },
   "scripts": {
-    "prepare:ocr": "node scripts/copy-ocr-assets.mjs",
-    "predev": "npm run prepare:ocr",
     "dev": "vite",
-    "prebuild": "npm run prepare:ocr",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run"
   },
   "dependencies": {
-    "@tesseract.js-data/chi_sim": "^1.0.0",
-    "@tesseract.js-data/eng": "^1.0.0",
-    "tesseract.js": "^7.0.0",
     "vue": "^3.5.18"
   },
   "devDependencies": {

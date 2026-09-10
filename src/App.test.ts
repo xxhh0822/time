@@ -48,19 +48,6 @@ describe('App', () => {
     expect(wrapper.find('.empty-result').exists()).toBe(true)
   })
 
-  it('shows the current-session field only while the helper is working', async () => {
-    const wrapper = mount(App)
-    const state = wrapper.findAll('select')[1]
-
-    await state.setValue('working')
-    expect(wrapper.find('.active-work-group').exists()).toBe(true)
-    expect(wrapper.find('.cooldown-group:not(.active-work-group)').exists()).toBe(false)
-
-    await state.setValue('used')
-    expect(wrapper.find('.active-work-group').exists()).toBe(false)
-    expect(wrapper.find('.cooldown-group').exists()).toBe(true)
-  })
-
   it('applies the builder result layout when the builder apprentice is selected', async () => {
     const wrapper = mount(App)
 
