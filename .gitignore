@@ -1,4 +1,5 @@
 node_modules/
 dist/
+public/ocr/
 *.local
 .DS_Store

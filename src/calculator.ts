@@ -1,6 +1,6 @@
 export type HelperType = 'lab' | 'builder'
 
-export type WorkdayState = 'idle' | 'available' | 'used'
+export type WorkdayState = 'idle' | 'available' | 'working' | 'used'
 
 export interface CalculationInput {
   startAt: Date
@@ -8,6 +8,7 @@ export interface CalculationInput {
   helperLevel: number
   workdayState: WorkdayState
   cooldownMinutes: number
+  activeRemainingMinutes?: number
 }
 
 export interface BoostRecord {
@@ -37,7 +38,14 @@ function addMinutes(date: Date, minutes: number) {
  * per real minute for up to one hour.
  */
 export function calculateFinish(input: CalculationInput): CalculationResult {
-  const { startAt, remainingMinutes, helperLevel, workdayState, cooldownMinutes } = input
+  const {
+    startAt,
+    remainingMinutes,
+    helperLevel,
+    workdayState,
+    cooldownMinutes,
+    activeRemainingMinutes = 0,
+  } = input
   const baselineFinishAt = addMinutes(startAt, remainingMinutes)
 
   if (remainingMinutes <= 0 || helperLevel <= 0) {
@@ -51,13 +59,49 @@ export function calculateFinish(input: CalculationInput): CalculationResult {
 
   let now = new Date(startAt)
   let remaining = remainingMinutes
-  let nextBoostAt = workdayState === 'used' ? addMinutes(startAt, cooldownMinutes) : new Date(startAt)
-  let followingBoostBoundary = workdayState === 'idle'
-    ? addMinutes(startAt, WORKDAY_MINUTES)
-    : workdayState === 'used'
-      ? addMinutes(startAt, cooldownMinutes + WORKDAY_MINUTES)
-      : addMinutes(startAt, cooldownMinutes)
   const boosts: BoostRecord[] = []
+
+  if (workdayState === 'working') {
+    const activeMinutes = Math.min(SESSION_MINUTES, Math.max(0, activeRemainingMinutes))
+    const totalRate = helperLevel + 1
+    const sessionRealMinutes = Math.min(activeMinutes, remaining / totalRate)
+    const endsAt = addMinutes(now, sessionRealMinutes)
+
+    if (sessionRealMinutes > 0) {
+      boosts.push({
+        startsAt: new Date(now),
+        endsAt,
+        helperProgressMinutes: sessionRealMinutes * helperLevel,
+        partial: sessionRealMinutes < activeMinutes,
+      })
+      remaining -= sessionRealMinutes * totalRate
+      now = endsAt
+    }
+
+    if (remaining <= 0) {
+      const elapsedMinutes = (now.getTime() - startAt.getTime()) / 60_000
+      return {
+        baselineFinishAt,
+        boostedFinishAt: now,
+        savedMinutes: Math.max(0, remainingMinutes - elapsedMinutes),
+        boosts,
+      }
+    }
+  }
+
+  let nextBoostAt = workdayState === 'used' ? addMinutes(startAt, cooldownMinutes) : new Date(startAt)
+  let followingBoostBoundary: Date
+
+  if (workdayState === 'working') {
+    nextBoostAt = addMinutes(startAt, WORKDAY_MINUTES - SESSION_MINUTES + activeRemainingMinutes)
+    followingBoostBoundary = addMinutes(nextBoostAt, WORKDAY_MINUTES)
+  } else if (workdayState === 'idle') {
+    followingBoostBoundary = addMinutes(startAt, WORKDAY_MINUTES)
+  } else if (workdayState === 'used') {
+    followingBoostBoundary = addMinutes(startAt, cooldownMinutes + WORKDAY_MINUTES)
+  } else {
+    followingBoostBoundary = addMinutes(startAt, cooldownMinutes)
+  }
 
   while (remaining > 0) {
     const waitMinutes = Math.max(0, (nextBoostAt.getTime() - now.getTime()) / 60_000)
