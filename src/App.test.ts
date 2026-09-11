@@ -93,4 +93,16 @@ describe('App', () => {
     expect(wrapper.findAll('.boost-list > li').length).toBeGreaterThan(12)
     expect(toggle.text()).toBe('收起记录')
   })
+
+  it('shows the local-processing notice and repository link', () => {
+    const wrapper = mount(App)
+    const link = wrapper.get('.footer-security a')
+
+    expect(wrapper.get('.footer-security').text()).toContain(
+      '纯前端运行，数据仅在本地处理',
+    )
+    expect(link.attributes('href')).toBe('https://github.com/xxhh0822/time')
+    expect(link.attributes('rel')).toBe('noopener noreferrer')
+    expect(link.find('svg').exists()).toBe(true)
+  })
 })

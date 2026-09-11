@@ -381,13 +381,32 @@ function stateDescription() {
       </section>
     </main>
 
-    <footer>
-      <span>计算规则：帮手每次工作1小时，所有帮手共用23小时工作日。</span>
-      <span>时间结果以当前设备时区为准</span>
-      <span>
-        本工具为非官方玩家内容，未经 Supercell 认可。详见
-        <a href="https://supercell.com/en/fan-content-policy/" target="_blank" rel="noreferrer">粉丝内容政策</a>。
-      </span>
+    <footer class="site-footer">
+      <div class="footer-notes">
+        <span>计算规则：帮手每次工作1小时，所有帮手共用23小时工作日。</span>
+        <span>时间结果以当前设备时区为准</span>
+        <span>
+          本工具为非官方玩家内容，未经 Supercell 认可。详见
+          <a href="https://supercell.com/en/fan-content-policy/" target="_blank" rel="noreferrer">粉丝内容政策</a>。
+        </span>
+      </div>
+      <div class="footer-security">
+        <span>纯前端运行，数据仅在本地处理</span>
+        <a
+          href="https://github.com/xxhh0822/time"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="GitHub 仓库"
+          title="GitHub 仓库"
+        >
+          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
+            <path
+              fill="currentColor"
+              d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"
+            />
+          </svg>
+        </a>
+      </div>
     </footer>
   </div>
 </template>
